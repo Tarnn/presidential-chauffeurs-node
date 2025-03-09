@@ -1,4 +1,9 @@
-// Enhanced server with email functionality and robust error handling
+/**
+ * Presidential Chauffeurs API
+ * 
+ * This is the main server file for the Presidential Chauffeurs API.
+ * It handles vehicle inquiries and sends email notifications.
+ */
 const express = require('express');
 const cors = require('cors');
 const nodemailer = require('nodemailer');
@@ -54,7 +59,10 @@ const vehicles = [
   }
 ];
 
-// Health check endpoint
+/**
+ * Health check endpoint
+ * Used to verify the server is running and check its status
+ */
 app.get('/health', (req, res) => {
   res.status(200).json({ 
     status: 'ok', 
@@ -64,12 +72,22 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Get all vehicles
+/**
+ * Get all vehicles endpoint
+ * Returns a list of all available vehicles
+ */
 app.get('/api/vehicles', (req, res) => {
   res.json(vehicles);
 });
 
-// Helper function to send email
+/**
+ * Send email function
+ * Handles formatting and sending emails for inquiries
+ * 
+ * @param {Object} data - The inquiry data
+ * @param {Object} vehicle - The vehicle data
+ * @returns {Promise} - The result of sending the email
+ */
 async function sendEmail(data, vehicle) {
   if (!transporter) {
     throw new Error('Email transporter not initialized');
@@ -277,7 +295,10 @@ You can reply directly to the customer by replying to this email.
   return transporter.sendMail(mailOptions);
 }
 
-// Inquiry endpoint with email sending
+/**
+ * Inquiry submission endpoint
+ * Handles vehicle inquiry submissions and sends email notifications
+ */
 app.post('/api/inquiry', async (req, res) => {
   try {
     const { vehicleId, purpose, date, email, description, captchaToken } = req.body;
@@ -362,7 +383,9 @@ app.post('/api/inquiry', async (req, res) => {
   }
 });
 
-// Handle 404 errors
+/**
+ * 404 handler for routes that don't exist
+ */
 app.use('*', (req, res) => {
   res.status(404).json({ 
     error: 'Not found',
@@ -370,7 +393,9 @@ app.use('*', (req, res) => {
   });
 });
 
-// Error handler
+/**
+ * Global error handler
+ */
 app.use((err, req, res, next) => {
   console.error('Server error:', err);
   res.status(500).json({ 
@@ -378,6 +403,14 @@ app.use((err, req, res, next) => {
     message: err.message 
   });
 });
+
+// Start server if running directly (not in serverless environment)
+if (require.main === module) {
+  const port = process.env.PORT || 3001;
+  app.listen(port, () => {
+    console.log(`Server running on port ${port} in ${process.env.NODE_ENV || 'development'} mode`);
+  });
+}
 
 // Export for serverless
 module.exports = app;

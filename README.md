@@ -1,10 +1,11 @@
 # Presidential Chauffeurs API
 
-This is the backend API for the Presidential Chauffeurs website. It handles vehicle inquiries and email notifications.
+This is the production-ready API for the Presidential Chauffeurs website. It handles vehicle inquiries and email notifications.
 
 ## Features
 
 - Vehicle inquiry submission with email notifications
+- Professional HTML email templates
 - reCAPTCHA protection against spam
 - Rate limiting to prevent abuse
 - Comprehensive error handling and logging
@@ -90,9 +91,38 @@ Add the following environment variables in the Vercel dashboard:
 
 ## API Endpoints
 
+### GET /health
+
+Returns the health status of the API.
+
+**Response:**
+
+```json
+{
+  "status": "ok",
+  "environment": "production",
+  "timestamp": "2025-03-09T23:50:32.433Z",
+  "emailEnabled": true
+}
+```
+
 ### GET /api/vehicles
 
 Returns a list of all available vehicles.
+
+**Response:**
+
+```json
+[
+  {
+    "id": 1,
+    "name": "Rolls-Royce Phantom",
+    "description": "The epitome of luxury and refinement, perfect for executive travel.",
+    "rate": 1500
+  },
+  ...
+]
+```
 
 ### POST /api/inquiry
 
@@ -117,7 +147,12 @@ Submits a new inquiry.
 ```json
 {
   "success": true,
-  "message": "Inquiry sent successfully"
+  "message": "Inquiry received successfully",
+  "emailSent": true,
+  "data": {
+    "vehicle": "Rolls-Royce Phantom",
+    "inquiryDate": "2025-03-09T23:51:51.473Z"
+  }
 }
 ```
 
