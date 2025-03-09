@@ -1,0 +1,32 @@
+[
+  {
+    "id": 1,
+    "name": "Rolls-Royce Phantom",
+    "description": "The epitome of luxury and refinement, perfect for executive travel.",
+    "rate": 1500,
+    "photos": [
+      "https://via.placeholder.com/400x250?text=Rolls-Royce+Phantom+1",
+      "https://via.placeholder.com/400x250?text=Rolls-Royce+Phantom+2"
+    ]
+  },
+  {
+    "id": 2,
+    "name": "Bentley Mulsanne",
+    "description": "A masterpiece of British craftsmanship, ideal for sophisticated journeys.",
+    "rate": 1200,
+    "photos": [
+      "https://via.placeholder.com/400x250?text=Bentley+Mulsanne+1",
+      "https://via.placeholder.com/400x250?text=Bentley+Mulsanne+2"
+    ]
+  },
+  {
+    "id": 3,
+    "name": "Mercedes-Maybach S-Class",
+    "description": "Unmatched elegance and comfort for the discerning traveler.",
+    "rate": 1300,
+    "photos": [
+      "https://via.placeholder.com/400x250?text=Maybach+S-Class+1",
+      "https://via.placeholder.com/400x250?text=Maybach+S-Class+2"
+    ]
+  }
+]
