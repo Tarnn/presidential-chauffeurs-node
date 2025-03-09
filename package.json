@@ -2,10 +2,10 @@
   "name": "presidential-chauffeurs-api",
   "version": "1.0.0",
   "description": "API for Presidential Chauffeurs website",
-  "main": "src/index.js",
+  "main": "simple-server.js",
   "scripts": {
-    "start": "node src/index.js",
-    "dev": "nodemon src/index.js",
+    "start": "node simple-server.js",
+    "dev": "nodemon simple-server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "engines": {
