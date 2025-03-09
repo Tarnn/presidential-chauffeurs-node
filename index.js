@@ -85,23 +85,180 @@ async function sendEmail(data, vehicle) {
     day: 'numeric'
   });
   
-  // Create email content
+  // Create email content with professional HTML template
   const mailOptions = {
     from: `"Presidential Chauffeurs" <${process.env.EMAIL_USER}>`,
     to: process.env.EMAIL_TO || process.env.EMAIL_USER,
     subject: `New Inquiry: ${vehicle.name} - ${purpose}`,
     html: `
-      <h2>New Chauffeur Service Inquiry</h2>
-      <p><strong>Vehicle:</strong> ${vehicle.name}</p>
-      <p><strong>Purpose:</strong> ${purpose}</p>
-      <p><strong>Requested Date:</strong> ${formattedDate}</p>
-      <p><strong>Customer Email:</strong> <a href="mailto:${email}">${email}</a></p>
-      ${description ? `<p><strong>Additional Details:</strong> ${description}</p>` : ''}
-      <hr>
-      <p>This inquiry was submitted through the Presidential Chauffeurs website.</p>
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>New Chauffeur Service Inquiry</title>
+        <style>
+          body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333333;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+          }
+          .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+          }
+          .header {
+            background-color: #1a1a1a;
+            padding: 20px;
+            text-align: center;
+            border-top-left-radius: 5px;
+            border-top-right-radius: 5px;
+          }
+          .header h1 {
+            color: #D0A42B;
+            margin: 0;
+            font-size: 24px;
+            font-weight: bold;
+            letter-spacing: 1px;
+          }
+          .content {
+            background-color: #ffffff;
+            padding: 30px;
+            border-left: 1px solid #dddddd;
+            border-right: 1px solid #dddddd;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+          }
+          .inquiry-details {
+            margin-bottom: 25px;
+          }
+          .inquiry-details h2 {
+            color: #1a1a1a;
+            font-size: 18px;
+            margin-top: 0;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #eeeeee;
+            padding-bottom: 10px;
+          }
+          .detail-row {
+            margin-bottom: 12px;
+            display: flex;
+            flex-wrap: wrap;
+          }
+          .detail-label {
+            font-weight: bold;
+            color: #555555;
+            width: 140px;
+            padding-right: 10px;
+          }
+          .detail-value {
+            color: #333333;
+            flex: 1;
+          }
+          .footer {
+            background-color: #f5f5f5;
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #777777;
+            border-bottom-left-radius: 5px;
+            border-bottom-right-radius: 5px;
+            border: 1px solid #dddddd;
+          }
+          .gold-button {
+            display: inline-block;
+            background-color: #D0A42B;
+            color: #1a1a1a;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            font-weight: bold;
+            margin-top: 15px;
+          }
+          .divider {
+            height: 1px;
+            background-color: #eeeeee;
+            margin: 20px 0;
+          }
+          .logo {
+            margin-bottom: 10px;
+          }
+          .highlight {
+            background-color: #f9f7f0;
+            border-left: 3px solid #D0A42B;
+            padding: 15px;
+            margin: 15px 0;
+          }
+          .vehicle-name {
+            color: #D0A42B;
+            font-weight: bold;
+            font-size: 18px;
+          }
+          .cta-container {
+            text-align: center;
+            margin: 25px 0 15px;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>PRESIDENTIAL CHAUFFEURS</h1>
+          </div>
+          <div class="content">
+            <div class="inquiry-details">
+              <h2>New Service Inquiry</h2>
+              
+              <div class="highlight">
+                <div class="vehicle-name">${vehicle.name}</div>
+                <div>${vehicle.description}</div>
+              </div>
+              
+              <div class="detail-row">
+                <span class="detail-label">Purpose:</span>
+                <span class="detail-value">${purpose}</span>
+              </div>
+              
+              <div class="detail-row">
+                <span class="detail-label">Requested Date:</span>
+                <span class="detail-value">${formattedDate}</span>
+              </div>
+              
+              <div class="detail-row">
+                <span class="detail-label">Customer Email:</span>
+                <span class="detail-value"><a href="mailto:${email}" style="color: #D0A42B; text-decoration: none;">${email}</a></span>
+              </div>
+              
+              ${description ? `
+              <div class="divider"></div>
+              <div class="detail-row">
+                <span class="detail-label">Additional Details:</span>
+                <span class="detail-value">${description}</span>
+              </div>
+              ` : ''}
+            </div>
+            
+            <div class="divider"></div>
+            
+            <p>This inquiry was submitted through the Presidential Chauffeurs website.</p>
+            
+            <div class="cta-container">
+              <a href="mailto:${email}?subject=Re: Inquiry about ${vehicle.name} Chauffeur Service&body=Thank you for your inquiry about our ${vehicle.name} service. We're pleased to provide you with more information." class="gold-button">Reply to Customer</a>
+            </div>
+          </div>
+          <div class="footer">
+            <p>&copy; ${new Date().getFullYear()} Presidential Chauffeurs Inc. All rights reserved.</p>
+            <p>This is an automated message. Please do not reply directly to this email.</p>
+          </div>
+        </div>
+      </body>
+      </html>
     `,
     text: `
-New Chauffeur Service Inquiry
+NEW CHAUFFEUR SERVICE INQUIRY
 
 Vehicle: ${vehicle.name}
 Purpose: ${purpose}
@@ -110,6 +267,9 @@ Customer Email: ${email}
 ${description ? `Additional Details: ${description}` : ''}
 
 This inquiry was submitted through the Presidential Chauffeurs website.
+You can reply directly to the customer by replying to this email.
+
+© ${new Date().getFullYear()} Presidential Chauffeurs Inc.
     `,
     replyTo: email
   };
