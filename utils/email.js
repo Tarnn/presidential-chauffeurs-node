@@ -25,12 +25,12 @@ const generateEmailTemplate = (data) => {
   if (templateCache.html && (Date.now() - templateCache.lastUpdated < TEMPLATE_CACHE_TTL)) {
     // Just replace the dynamic content in the cached template
     return templateCache.html
-      .replace('{{vehicleName}}', vehicleName)
-      .replace('{{purpose}}', purpose)
-      .replace('{{date}}', date)
-      .replace('{{email}}', email)
-      .replace('{{description}}', description)
-      .replace('{{currentYear}}', currentYear);
+      .replace(/\{\{vehicleName\}\}/g, vehicleName)
+      .replace(/\{\{purpose\}\}/g, purpose)
+      .replace(/\{\{date\}\}/g, date)
+      .replace(/\{\{email\}\}/g, email)
+      .replace(/\{\{description\}\}/g, description)
+      .replace(/\{\{currentYear\}\}/g, currentYear);
   }
   
   // Generate the full template
@@ -143,7 +143,7 @@ const generateEmailTemplate = (data) => {
         
         <p>This inquiry was submitted through the Presidential Chauffeurs website.</p>
         
-        <a href="#" class="button">Reply to Customer</a>
+        <a href="mailto:{{email}}?subject=Re: Inquiry for {{vehicleName}} - Presidential Chauffeurs&body=Dear Customer,%0A%0AThank you for your inquiry about our {{vehicleName}} service for {{purpose}} on {{date}}.%0A%0AWe appreciate your interest in Presidential Chauffeurs and would like to provide you with more information.%0A%0A" class="button">Reply to Customer</a>
       </div>
       <div class="footer">
         <p>&copy; {{currentYear}} Presidential Chauffeurs Inc. All rights reserved.</p>
@@ -159,12 +159,12 @@ const generateEmailTemplate = (data) => {
   
   // Replace placeholders with actual data
   return htmlTemplate
-    .replace('{{vehicleName}}', vehicleName)
-    .replace('{{purpose}}', purpose)
-    .replace('{{date}}', date)
-    .replace('{{email}}', email)
-    .replace('{{description}}', description)
-    .replace('{{currentYear}}', currentYear);
+    .replace(/\{\{vehicleName\}\}/g, vehicleName)
+    .replace(/\{\{purpose\}\}/g, purpose)
+    .replace(/\{\{date\}\}/g, date)
+    .replace(/\{\{email\}\}/g, email)
+    .replace(/\{\{description\}\}/g, description)
+    .replace(/\{\{currentYear\}\}/g, currentYear);
 };
 
 /**
@@ -185,11 +185,19 @@ const sendEmail = async (data) => {
   // Generate email content
   const html = generateEmailTemplate(data);
 
+  // Format date for better readability in subject line
+  const formattedDate = new Date(data.date).toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+
   // Setup email options
   const mailOptions = {
-    from: process.env.EMAIL_USER,
+    from: `"Presidential Chauffeurs" <${process.env.EMAIL_USER}>`,
     to: process.env.EMAIL_TO,
-    subject: `Inquiry for ${data.vehicleName} - Presidential Chauffeurs`,
+    subject: `New Inquiry: ${data.vehicleName} - ${data.purpose} on ${formattedDate}`,
     html,
     replyTo: data.email // Set reply-to as the customer's email
   };
