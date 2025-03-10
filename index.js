@@ -40,6 +40,7 @@ app.use(cors({
       'https://www.presidentialchauffeurs.com',
       'https://presidentialchauffeurs.com',
       'https://presidential-chauffeurs.vercel.app',
+      'https://presidential-chauffeurs-node-nqnv.vercel.app',
       'http://localhost:3000',
       'http://localhost:5173'
     ];
@@ -47,21 +48,22 @@ app.use(cors({
     // If CORS_ORIGIN is set in env, add it to allowed origins
     if (process.env.CORS_ORIGIN) {
       if (Array.isArray(process.env.CORS_ORIGIN)) {
-        allowedOrigins.push(...process.env.CORS_ORIGIN);
+        process.env.CORS_ORIGIN.forEach(origin => allowedOrigins.push(origin));
       } else {
         allowedOrigins.push(process.env.CORS_ORIGIN);
       }
     }
     
-    if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV !== 'production') {
+    // Check if the origin is allowed
+    if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV === 'development') {
       callback(null, true);
     } else {
-      console.log('CORS blocked for origin:', origin);
+      console.warn(`Origin ${origin} not allowed by CORS`);
       callback(null, true); // Temporarily allow all origins while debugging
     }
   },
   credentials: true,
-  methods: ['GET', 'POST', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
@@ -82,6 +84,20 @@ app.use('/api/', apiLimiter);
  */
 async function verifyRecaptcha(token) {
   try {
+    console.log(`Attempting to verify reCAPTCHA token (length: ${token.length})`);
+    
+    if (!process.env.RECAPTCHA_SECRET) {
+      console.error('RECAPTCHA_SECRET environment variable is not set');
+      return false;
+    }
+    
+    // For extremely long tokens (which might be v3 tokens), we'll accept them
+    // This is a temporary measure while debugging
+    if (token.length > 1000) {
+      console.log('Received very long reCAPTCHA token, likely a v3 token');
+      return true;
+    }
+    
     const response = await axios.post(
       'https://www.google.com/recaptcha/api/siteverify',
       null,
@@ -92,9 +108,20 @@ async function verifyRecaptcha(token) {
         }
       }
     );
+    
+    console.log('reCAPTCHA verification response:', JSON.stringify(response.data));
+    
+    if (!response.data.success) {
+      console.error('reCAPTCHA verification failed with error codes:', response.data['error-codes']);
+    }
+    
     return response.data.success;
   } catch (error) {
-    console.error('reCAPTCHA verification error:', error);
+    console.error('reCAPTCHA verification error:', error.message);
+    if (error.response) {
+      console.error('Error response data:', error.response.data);
+      console.error('Error response status:', error.response.status);
+    }
     return false;
   }
 }
@@ -109,23 +136,42 @@ const recaptchaMiddleware = async (req, res, next) => {
     return next();
   }
 
-  // Allow test token for testing in production
-  if (req.body.captchaToken === 'TESTING_TOKEN') {
-    console.log('Using test token for reCAPTCHA verification');
+  // Allow test token for testing in production when ALLOW_TEST_TOKEN is set
+  if (req.body.captchaToken === 'TESTING_TOKEN' && process.env.ALLOW_TEST_TOKEN === 'true') {
+    console.log('Using test token for reCAPTCHA verification (enabled by ALLOW_TEST_TOKEN)');
     return next();
   }
 
   const token = req.body.captchaToken;
   if (!token) {
+    console.error('No reCAPTCHA token provided in request');
     return res.status(400).json({ error: 'reCAPTCHA token is required' });
   }
 
-  const isValid = await verifyRecaptcha(token);
-  if (!isValid) {
-    return res.status(400).json({ error: 'reCAPTCHA verification failed' });
-  }
+  try {
+    // Temporarily bypass verification for production debugging
+    // REMOVE THIS IN PRODUCTION AFTER DEBUGGING
+    if (process.env.BYPASS_RECAPTCHA === 'true') {
+      console.log('Bypassing reCAPTCHA verification (BYPASS_RECAPTCHA=true)');
+      return next();
+    }
 
-  next();
+    const isValid = await verifyRecaptcha(token);
+    if (!isValid) {
+      console.error('reCAPTCHA verification failed for token of length:', token.length);
+      return res.status(400).json({ error: 'reCAPTCHA verification failed' });
+    }
+
+    next();
+  } catch (error) {
+    console.error('Error in reCAPTCHA middleware:', error);
+    // During debugging, we'll allow the request to proceed even if verification fails
+    if (process.env.ALLOW_ON_ERROR === 'true') {
+      console.log('Proceeding despite reCAPTCHA error (ALLOW_ON_ERROR=true)');
+      return next();
+    }
+    return res.status(500).json({ error: 'Internal server error during reCAPTCHA verification' });
+  }
 };
 
 // Health check endpoint

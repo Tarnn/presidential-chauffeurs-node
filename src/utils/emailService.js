@@ -50,51 +50,80 @@ const sendInquiryEmail = async (inquiryData, vehicle) => {
             color: #333333;
             margin: 0;
             padding: 0;
+            background-color: #f9f9f9;
           }
           .container {
             max-width: 600px;
             margin: 0 auto;
-            padding: 20px;
+            background-color: #ffffff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
           }
           .header {
-            background-color: #1a1a1a;
+            background-color: #000000;
             padding: 20px;
             text-align: center;
-            border-top-left-radius: 5px;
-            border-top-right-radius: 5px;
           }
           .header h1 {
             color: #D0A42B;
             margin: 0;
             font-size: 24px;
             font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
           }
           .content {
-            background-color: #ffffff;
             padding: 30px;
-            border-left: 1px solid #dddddd;
-            border-right: 1px solid #dddddd;
           }
-          .inquiry-details {
-            margin-bottom: 25px;
-          }
-          .inquiry-details h2 {
-            color: #1a1a1a;
-            font-size: 18px;
+          .inquiry-title {
+            font-size: 20px;
+            font-weight: bold;
             margin-top: 0;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
+            color: #333333;
             border-bottom: 1px solid #eeeeee;
             padding-bottom: 10px;
           }
-          .detail-row {
-            margin-bottom: 12px;
+          .vehicle-info {
+            background-color: #f9f9f7;
+            border-left: 4px solid #D0A42B;
+            padding: 15px;
+            margin-bottom: 20px;
+          }
+          .vehicle-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333333;
+            margin: 0 0 5px 0;
+          }
+          .vehicle-description {
+            color: #666666;
+            margin: 0;
+            font-size: 14px;
+          }
+          .detail-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+          }
+          .detail-table td {
+            padding: 10px 0;
+            border-bottom: 1px solid #eeeeee;
           }
           .detail-label {
             font-weight: bold;
             color: #555555;
+            width: 40%;
+            vertical-align: top;
           }
           .detail-value {
             color: #333333;
+          }
+          .additional-details {
+            background-color: #f9f9f9;
+            padding: 15px;
+            margin-top: 10px;
+            margin-bottom: 20px;
+            border-radius: 4px;
           }
           .footer {
             background-color: #f5f5f5;
@@ -102,77 +131,83 @@ const sendInquiryEmail = async (inquiryData, vehicle) => {
             text-align: center;
             font-size: 12px;
             color: #777777;
-            border-bottom-left-radius: 5px;
-            border-bottom-right-radius: 5px;
-            border: 1px solid #dddddd;
+          }
+          .button-container {
+            text-align: center;
+            margin: 25px 0;
           }
           .gold-button {
             display: inline-block;
             background-color: #D0A42B;
-            color: #1a1a1a;
+            color: #000000;
             text-decoration: none;
-            padding: 10px 20px;
+            padding: 12px 25px;
             border-radius: 4px;
             font-weight: bold;
-            margin-top: 15px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 14px;
           }
-          .divider {
-            height: 1px;
-            background-color: #eeeeee;
-            margin: 20px 0;
+          .note {
+            font-size: 14px;
+            color: #666666;
+            text-align: center;
+            margin-bottom: 20px;
+          }
+          .copyright {
+            margin-top: 0;
+            margin-bottom: 5px;
+          }
+          .automated-message {
+            margin-top: 0;
+            font-style: italic;
           }
         </style>
       </head>
       <body>
         <div class="container">
           <div class="header">
-            <h1>PRESIDENTIAL CHAUFFEURS</h1>
+            <h1>Presidential Chauffeurs</h1>
           </div>
           <div class="content">
-            <div class="inquiry-details">
-              <h2>New Service Inquiry</h2>
-              
-              <div class="detail-row">
-                <span class="detail-label">Vehicle:</span>
-                <span class="detail-value">${vehicle.name}</span>
-              </div>
-              
-              <div class="detail-row">
-                <span class="detail-label">Purpose:</span>
-                <span class="detail-value">${purpose}</span>
-              </div>
-              
-              <div class="detail-row">
-                <span class="detail-label">Requested Date:</span>
-                <span class="detail-value">${formattedDate}</span>
-              </div>
-              
-              <div class="detail-row">
-                <span class="detail-label">Customer Email:</span>
-                <span class="detail-value"><a href="mailto:${email}">${email}</a></span>
-              </div>
-              
-              ${description ? `
-              <div class="divider"></div>
-              <div class="detail-row">
-                <span class="detail-label">Additional Details:</span>
-                <span class="detail-value">${description}</span>
-              </div>
-              ` : ''}
+            <h2 class="inquiry-title">New Service Inquiry</h2>
+            
+            <div class="vehicle-info">
+              <h3 class="vehicle-name">${vehicle.name}</h3>
+              <p class="vehicle-description">The epitome of luxury and refinement, perfect for executive travel.</p>
             </div>
             
-            <div class="divider"></div>
+            <table class="detail-table">
+              <tr>
+                <td class="detail-label">Purpose:</td>
+                <td class="detail-value">${purpose}</td>
+              </tr>
+              <tr>
+                <td class="detail-label">Requested Date:</td>
+                <td class="detail-value">${formattedDate}</td>
+              </tr>
+              <tr>
+                <td class="detail-label">Customer Email:</td>
+                <td class="detail-value"><a href="mailto:${email}" style="color: #D0A42B; text-decoration: none;">${email}</a></td>
+              </tr>
+            </table>
             
-            <p>This inquiry was submitted through the Presidential Chauffeurs website.</p>
-            <p>You can reply directly to the customer by clicking the button below or replying to this email.</p>
+            ${description ? `
+            <div class="additional-details">
+              <strong>Additional Details:</strong><br>
+              ${description}
+            </div>
+            ` : ''}
             
-            <div style="text-align: center;">
+            <p class="note">This inquiry was submitted through the Presidential Chauffeurs website.</p>
+            
+            <div class="button-container">
               <a href="mailto:${email}?subject=Re: Inquiry about ${vehicle.name} Chauffeur Service&body=Thank you for your inquiry about our ${vehicle.name} service. We're pleased to provide you with more information." class="gold-button">Reply to Customer</a>
             </div>
           </div>
           <div class="footer">
-            <p>&copy; ${new Date().getFullYear()} Presidential Chauffeurs Inc. All rights reserved.</p>
-            <p>This is an automated message, please do not reply directly to this email.</p>
+            <p class="copyright">&copy; ${new Date().getFullYear()} Presidential Chauffeurs Inc. All rights reserved.</p>
+            <p class="automated-message">This is an automated message. Please do not reply directly to this email.</p>
           </div>
         </div>
       </body>
