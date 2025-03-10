@@ -27,7 +27,7 @@ const generateEmailTemplate = (data) => {
         }
         .header {
           background-color: #1a1a1a;
-          color: #fff;
+          color: #D4AF37;
           padding: 20px;
           text-align: center;
         }
@@ -36,6 +36,38 @@ const generateEmailTemplate = (data) => {
           border: 1px solid #ddd;
           border-top: none;
         }
+        .vehicle-card {
+          background-color: #faf9f2;
+          border-left: 4px solid #D4AF37;
+          padding: 15px;
+          margin-bottom: 20px;
+        }
+        .vehicle-name {
+          color: #D4AF37;
+          font-size: 18px;
+          font-weight: bold;
+          margin: 0 0 5px 0;
+        }
+        .vehicle-description {
+          margin: 0;
+          font-size: 14px;
+        }
+        .detail-row {
+          display: table;
+          width: 100%;
+          margin-bottom: 10px;
+        }
+        .detail-label {
+          display: table-cell;
+          font-weight: bold;
+          width: 150px;
+        }
+        .detail-value {
+          display: table-cell;
+        }
+        .additional-details {
+          margin-top: 20px;
+        }
         .footer {
           background-color: #f4f4f4;
           padding: 10px 20px;
@@ -43,59 +75,56 @@ const generateEmailTemplate = (data) => {
           font-size: 12px;
           color: #666;
         }
-        h1 {
-          color: #gold;
-          margin: 0;
-        }
-        h2 {
-          color: #333;
-          border-bottom: 1px solid #ddd;
-          padding-bottom: 10px;
-        }
-        .detail {
-          margin-bottom: 15px;
-        }
-        .label {
-          font-weight: bold;
+        .button {
           display: inline-block;
-          width: 120px;
-        }
-        .value {
-          display: inline-block;
+          background-color: #D4AF37;
+          color: white;
+          padding: 10px 20px;
+          text-decoration: none;
+          border-radius: 4px;
+          margin-top: 20px;
         }
       </style>
     </head>
     <body>
       <div class="header">
-        <h1>Presidential Chauffeurs</h1>
-        <p>Luxury Transportation Service</p>
+        <h1>PRESIDENTIAL CHAUFFEURS</h1>
       </div>
       <div class="content">
-        <h2>New Chauffeur Service Inquiry</h2>
-        <div class="detail">
-          <span class="label">Vehicle:</span>
-          <span class="value">${vehicleName}</span>
+        <h2>New Service Inquiry</h2>
+        
+        <div class="vehicle-card">
+          <h3 class="vehicle-name">${vehicleName}</h3>
+          <p class="vehicle-description">The epitome of luxury and refinement, perfect for executive travel.</p>
         </div>
-        <div class="detail">
-          <span class="label">Purpose:</span>
-          <span class="value">${purpose}</span>
+        
+        <div class="detail-row">
+          <div class="detail-label">Purpose:</div>
+          <div class="detail-value">${purpose}</div>
         </div>
-        <div class="detail">
-          <span class="label">Date:</span>
-          <span class="value">${date}</span>
+        
+        <div class="detail-row">
+          <div class="detail-label">Requested Date:</div>
+          <div class="detail-value">${date}</div>
         </div>
-        <div class="detail">
-          <span class="label">Contact Email:</span>
-          <span class="value">${email}</span>
+        
+        <div class="detail-row">
+          <div class="detail-label">Customer Email:</div>
+          <div class="detail-value">${email}</div>
         </div>
-        <div class="detail">
-          <span class="label">Description:</span>
-          <span class="value">${description}</span>
+        
+        <div class="additional-details">
+          <div class="detail-label">Additional Details:</div>
+          <div class="detail-value">${description}</div>
         </div>
+        
+        <p>This inquiry was submitted through the Presidential Chauffeurs website.</p>
+        
+        <a href="#" class="button">Reply to Customer</a>
       </div>
       <div class="footer">
-        <p>This is an automated message from the Presidential Chauffeurs website.</p>
-        <p>&copy; ${new Date().getFullYear()} Presidential Chauffeurs. All rights reserved.</p>
+        <p>&copy; ${new Date().getFullYear()} Presidential Chauffeurs Inc. All rights reserved.</p>
+        <p>This is an automated message. Please do not reply directly to this email.</p>
       </div>
     </body>
     </html>
@@ -125,7 +154,8 @@ const sendEmail = async (data) => {
     from: process.env.EMAIL_USER,
     to: process.env.EMAIL_TO,
     subject: `Inquiry for ${data.vehicleName} - Presidential Chauffeurs`,
-    html
+    html,
+    replyTo: data.email // Set reply-to as the customer's email
   };
 
   // Send email
