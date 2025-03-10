@@ -42,7 +42,7 @@ const sendInquiryEmail = async (inquiryData, vehicle) => {
       <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>New Chauffeur Service Inquiry</title>
+        <title>New Service Inquiry</title>
         <style>
           body {
             font-family: Arial, sans-serif;
@@ -56,10 +56,10 @@ const sendInquiryEmail = async (inquiryData, vehicle) => {
             max-width: 600px;
             margin: 0 auto;
             background-color: #ffffff;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e0e0e0;
           }
           .header {
-            background-color: #000000;
+            background-color: #1a1a1a;
             padding: 20px;
             text-align: center;
           }
@@ -69,13 +69,12 @@ const sendInquiryEmail = async (inquiryData, vehicle) => {
             font-size: 24px;
             font-weight: bold;
             text-transform: uppercase;
-            letter-spacing: 1px;
           }
           .content {
-            padding: 30px;
+            padding: 20px 30px;
           }
           .inquiry-title {
-            font-size: 20px;
+            font-size: 18px;
             font-weight: bold;
             margin-top: 0;
             margin-bottom: 20px;
@@ -92,7 +91,7 @@ const sendInquiryEmail = async (inquiryData, vehicle) => {
           .vehicle-name {
             font-size: 18px;
             font-weight: bold;
-            color: #333333;
+            color: #D0A42B;
             margin: 0 0 5px 0;
           }
           .vehicle-description {
@@ -100,37 +99,32 @@ const sendInquiryEmail = async (inquiryData, vehicle) => {
             margin: 0;
             font-size: 14px;
           }
-          .detail-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
-          }
-          .detail-table td {
-            padding: 10px 0;
+          .detail-row {
+            margin-bottom: 10px;
+            padding-bottom: 10px;
             border-bottom: 1px solid #eeeeee;
           }
           .detail-label {
             font-weight: bold;
             color: #555555;
-            width: 40%;
+            display: inline-block;
+            width: 140px;
             vertical-align: top;
           }
           .detail-value {
             color: #333333;
+            display: inline-block;
           }
-          .additional-details {
-            background-color: #f9f9f9;
-            padding: 15px;
-            margin-top: 10px;
-            margin-bottom: 20px;
-            border-radius: 4px;
+          .detail-value a {
+            color: #D0A42B;
+            text-decoration: none;
           }
-          .footer {
-            background-color: #f5f5f5;
-            padding: 20px;
-            text-align: center;
-            font-size: 12px;
-            color: #777777;
+          .detail-value a:hover {
+            text-decoration: underline;
+          }
+          .note {
+            margin: 20px 0;
+            font-size: 14px;
           }
           .button-container {
             text-align: center;
@@ -139,27 +133,26 @@ const sendInquiryEmail = async (inquiryData, vehicle) => {
           .gold-button {
             display: inline-block;
             background-color: #D0A42B;
-            color: #000000;
+            color: #ffffff;
             text-decoration: none;
-            padding: 12px 25px;
+            padding: 10px 20px;
             border-radius: 4px;
             font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
             font-size: 14px;
           }
-          .note {
-            font-size: 14px;
-            color: #666666;
+          .footer {
+            background-color: #f5f5f5;
+            padding: 15px;
             text-align: center;
-            margin-bottom: 20px;
+            font-size: 12px;
+            color: #777777;
+            border-top: 1px solid #e0e0e0;
           }
           .copyright {
-            margin-top: 0;
-            margin-bottom: 5px;
+            margin: 0 0 5px 0;
           }
           .automated-message {
-            margin-top: 0;
+            margin: 0;
             font-style: italic;
           }
         </style>
@@ -177,25 +170,25 @@ const sendInquiryEmail = async (inquiryData, vehicle) => {
               <p class="vehicle-description">The epitome of luxury and refinement, perfect for executive travel.</p>
             </div>
             
-            <table class="detail-table">
-              <tr>
-                <td class="detail-label">Purpose:</td>
-                <td class="detail-value">${purpose}</td>
-              </tr>
-              <tr>
-                <td class="detail-label">Requested Date:</td>
-                <td class="detail-value">${formattedDate}</td>
-              </tr>
-              <tr>
-                <td class="detail-label">Customer Email:</td>
-                <td class="detail-value"><a href="mailto:${email}" style="color: #D0A42B; text-decoration: none;">${email}</a></td>
-              </tr>
-            </table>
+            <div class="detail-row">
+              <span class="detail-label">Purpose:</span>
+              <span class="detail-value">${purpose}</span>
+            </div>
+            
+            <div class="detail-row">
+              <span class="detail-label">Requested Date:</span>
+              <span class="detail-value">${formattedDate}</span>
+            </div>
+            
+            <div class="detail-row">
+              <span class="detail-label">Customer Email:</span>
+              <span class="detail-value"><a href="mailto:${email}">${email}</a></span>
+            </div>
             
             ${description ? `
-            <div class="additional-details">
-              <strong>Additional Details:</strong><br>
-              ${description}
+            <div class="detail-row">
+              <span class="detail-label">Additional Details:</span>
+              <span class="detail-value">${description}</span>
             </div>
             ` : ''}
             
