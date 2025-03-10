@@ -3,6 +3,15 @@
  */
 const nodemailer = require('nodemailer');
 
+// Cache for compiled templates
+const templateCache = {
+  html: null,
+  lastUpdated: 0
+};
+
+// Template TTL (1 hour)
+const TEMPLATE_CACHE_TTL = 3600000;
+
 /**
  * Generates an HTML email template for chauffeur service inquiries
  * @param {Object} data - The inquiry data
@@ -10,8 +19,22 @@ const nodemailer = require('nodemailer');
  */
 const generateEmailTemplate = (data) => {
   const { vehicleName, purpose, date, email, description } = data;
+  const currentYear = new Date().getFullYear();
   
-  return `
+  // Use cached template structure if available and not expired
+  if (templateCache.html && (Date.now() - templateCache.lastUpdated < TEMPLATE_CACHE_TTL)) {
+    // Just replace the dynamic content in the cached template
+    return templateCache.html
+      .replace('{{vehicleName}}', vehicleName)
+      .replace('{{purpose}}', purpose)
+      .replace('{{date}}', date)
+      .replace('{{email}}', email)
+      .replace('{{description}}', description)
+      .replace('{{currentYear}}', currentYear);
+  }
+  
+  // Generate the full template
+  const htmlTemplate = `
     <!DOCTYPE html>
     <html>
     <head>
@@ -94,28 +117,28 @@ const generateEmailTemplate = (data) => {
         <h2>New Service Inquiry</h2>
         
         <div class="vehicle-card">
-          <h3 class="vehicle-name">${vehicleName}</h3>
+          <h3 class="vehicle-name">{{vehicleName}}</h3>
           <p class="vehicle-description">The epitome of luxury and refinement, perfect for executive travel.</p>
         </div>
         
         <div class="detail-row">
           <div class="detail-label">Purpose:</div>
-          <div class="detail-value">${purpose}</div>
+          <div class="detail-value">{{purpose}}</div>
         </div>
         
         <div class="detail-row">
           <div class="detail-label">Requested Date:</div>
-          <div class="detail-value">${date}</div>
+          <div class="detail-value">{{date}}</div>
         </div>
         
         <div class="detail-row">
           <div class="detail-label">Customer Email:</div>
-          <div class="detail-value">${email}</div>
+          <div class="detail-value">{{email}}</div>
         </div>
         
         <div class="additional-details">
           <div class="detail-label">Additional Details:</div>
-          <div class="detail-value">${description}</div>
+          <div class="detail-value">{{description}}</div>
         </div>
         
         <p>This inquiry was submitted through the Presidential Chauffeurs website.</p>
@@ -123,12 +146,25 @@ const generateEmailTemplate = (data) => {
         <a href="#" class="button">Reply to Customer</a>
       </div>
       <div class="footer">
-        <p>&copy; ${new Date().getFullYear()} Presidential Chauffeurs Inc. All rights reserved.</p>
+        <p>&copy; {{currentYear}} Presidential Chauffeurs Inc. All rights reserved.</p>
         <p>This is an automated message. Please do not reply directly to this email.</p>
       </div>
     </body>
     </html>
   `;
+  
+  // Cache the template structure
+  templateCache.html = htmlTemplate;
+  templateCache.lastUpdated = Date.now();
+  
+  // Replace placeholders with actual data
+  return htmlTemplate
+    .replace('{{vehicleName}}', vehicleName)
+    .replace('{{purpose}}', purpose)
+    .replace('{{date}}', date)
+    .replace('{{email}}', email)
+    .replace('{{description}}', description)
+    .replace('{{currentYear}}', currentYear);
 };
 
 /**

@@ -10,25 +10,59 @@ const axios = require('axios');
 const { sendEmail } = require('./utils/email');
 const fs = require('fs');
 const path = require('path');
+const compression = require('compression');
 
-// Load vehicle data with error handling
-let vehiclesData = [];
-try {
-  const vehiclesFilePath = path.join(__dirname, 'data', 'vehicles.json');
-  if (fs.existsSync(vehiclesFilePath)) {
-    vehiclesData = JSON.parse(fs.readFileSync(vehiclesFilePath, 'utf8'));
-    console.log(`Loaded ${vehiclesData.length} vehicles from data file`);
-  } else {
-    console.error('Error loading vehicle data: vehicles.json file not found');
+// Cache variables
+const CACHE_TTL = 3600000; // 1 hour in milliseconds
+let vehiclesCache = {
+  data: [],
+  lastUpdated: 0
+};
+
+// reCAPTCHA token cache
+const recaptchaCache = new Map();
+const RECAPTCHA_CACHE_TTL = 300000; // 5 minutes in milliseconds
+
+// Load vehicle data with error handling and caching
+const loadVehiclesData = () => {
+  // Check if cache is still valid
+  const now = Date.now();
+  if (vehiclesCache.data.length > 0 && (now - vehiclesCache.lastUpdated) < CACHE_TTL) {
+    console.log('Using cached vehicles data');
+    return vehiclesCache.data;
   }
-} catch (error) {
-  console.error('Error loading vehicle data:', error.message);
-}
+
+  try {
+    const vehiclesFilePath = path.join(__dirname, 'data', 'vehicles.json');
+    if (fs.existsSync(vehiclesFilePath)) {
+      const data = JSON.parse(fs.readFileSync(vehiclesFilePath, 'utf8'));
+      console.log(`Loaded ${data.length} vehicles from data file`);
+      
+      // Update cache
+      vehiclesCache = {
+        data,
+        lastUpdated: now
+      };
+      
+      return data;
+    } else {
+      console.error('Error loading vehicle data: vehicles.json file not found');
+      return [];
+    }
+  } catch (error) {
+    console.error('Error loading vehicle data:', error.message);
+    return [];
+  }
+};
+
+// Initial load
+let vehiclesData = loadVehiclesData();
 
 // Create Express app
 const app = express();
 
 // Middleware
+app.use(compression()); // Add compression middleware
 app.use(express.json());
 app.use(cors({
   origin: function(origin, callback) {
@@ -91,6 +125,18 @@ async function verifyRecaptcha(token) {
       return false;
     }
     
+    // Check cache first
+    if (recaptchaCache.has(token)) {
+      const cachedResult = recaptchaCache.get(token);
+      if (Date.now() - cachedResult.timestamp < RECAPTCHA_CACHE_TTL) {
+        console.log('Using cached reCAPTCHA verification result');
+        return cachedResult.valid;
+      } else {
+        // Remove expired cache entry
+        recaptchaCache.delete(token);
+      }
+    }
+    
     // Direct API call to Google's reCAPTCHA verification endpoint
     const verifyUrl = 'https://www.google.com/recaptcha/api/siteverify';
     const formData = new URLSearchParams();
@@ -110,7 +156,25 @@ async function verifyRecaptcha(token) {
     
     console.log('reCAPTCHA API response:', JSON.stringify(response.data));
     
-    if (!response.data.success) {
+    const isValid = !!response.data.success;
+    
+    // Cache the result
+    recaptchaCache.set(token, {
+      valid: isValid,
+      timestamp: Date.now()
+    });
+    
+    // Clean up old cache entries periodically
+    if (recaptchaCache.size > 100) {
+      const now = Date.now();
+      for (const [key, value] of recaptchaCache.entries()) {
+        if (now - value.timestamp > RECAPTCHA_CACHE_TTL) {
+          recaptchaCache.delete(key);
+        }
+      }
+    }
+    
+    if (!isValid) {
       const errorCodes = response.data['error-codes'] || [];
       console.error('reCAPTCHA verification failed with error codes:', errorCodes);
       
@@ -139,11 +203,9 @@ async function verifyRecaptcha(token) {
             console.error(`Unknown error code: ${code}`);
         }
       });
-      
-      return false;
     }
     
-    return true;
+    return isValid;
   } catch (error) {
     console.error('reCAPTCHA verification error:', error.message);
     if (error.response) {
