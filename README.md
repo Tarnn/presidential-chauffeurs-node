@@ -59,6 +59,40 @@ RATE_LIMIT_MAX=10
 npm run dev
 ```
 
+## Testing
+
+The API includes comprehensive test coverage using Jest and Supertest.
+
+### Running Tests
+
+```
+npm test
+```
+
+For continuous testing during development:
+
+```
+npm run test:watch
+```
+
+### Test Coverage
+
+To generate a test coverage report:
+
+```
+npm test -- --coverage
+```
+
+### Test Structure
+
+- `__tests__/index.test.js`: Tests for the main API endpoints
+- `__tests__/email.test.js`: Tests for email functionality
+- `__tests__/middleware.test.js`: Tests for middleware functions like reCAPTCHA verification
+- `__tests__/data.test.js`: Tests for data loading functionality
+- `__tests__/health.test.js`: Tests for the health check endpoint
+
+For more detailed testing information, see the [TESTING.md](../TESTING.md) file.
+
 ## Deployment to Vercel
 
 ### Setting Up Vercel
