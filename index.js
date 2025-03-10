@@ -84,43 +84,73 @@ app.use('/api/', apiLimiter);
  */
 async function verifyRecaptcha(token) {
   try {
-    console.log(`Attempting to verify reCAPTCHA token (length: ${token.length})`);
+    console.log(`Verifying reCAPTCHA token (first 10 chars): ${token.substring(0, 10)}...`);
     
     if (!process.env.RECAPTCHA_SECRET) {
       console.error('RECAPTCHA_SECRET environment variable is not set');
       return false;
     }
     
-    // For extremely long tokens (which might be v3 tokens), we'll accept them
-    // This is a temporary measure while debugging
-    if (token.length > 1000) {
-      console.log('Received very long reCAPTCHA token, likely a v3 token');
-      return true;
-    }
+    // Direct API call to Google's reCAPTCHA verification endpoint
+    const verifyUrl = 'https://www.google.com/recaptcha/api/siteverify';
+    const formData = new URLSearchParams();
+    formData.append('secret', process.env.RECAPTCHA_SECRET);
+    formData.append('response', token);
     
-    const response = await axios.post(
-      'https://www.google.com/recaptcha/api/siteverify',
-      null,
-      {
-        params: {
-          secret: process.env.RECAPTCHA_SECRET,
-          response: token
-        }
+    console.log('Sending verification request to Google reCAPTCHA API');
+    
+    const response = await axios({
+      method: 'post',
+      url: verifyUrl,
+      data: formData,
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
       }
-    );
+    });
     
-    console.log('reCAPTCHA verification response:', JSON.stringify(response.data));
+    console.log('reCAPTCHA API response:', JSON.stringify(response.data));
     
     if (!response.data.success) {
-      console.error('reCAPTCHA verification failed with error codes:', response.data['error-codes']);
+      const errorCodes = response.data['error-codes'] || [];
+      console.error('reCAPTCHA verification failed with error codes:', errorCodes);
+      
+      // Log specific error messages based on error codes
+      errorCodes.forEach(code => {
+        switch(code) {
+          case 'missing-input-secret':
+            console.error('The secret parameter is missing');
+            break;
+          case 'invalid-input-secret':
+            console.error('The secret parameter is invalid or malformed');
+            break;
+          case 'missing-input-response':
+            console.error('The response parameter is missing');
+            break;
+          case 'invalid-input-response':
+            console.error('The response parameter is invalid or malformed');
+            break;
+          case 'bad-request':
+            console.error('The request is invalid or malformed');
+            break;
+          case 'timeout-or-duplicate':
+            console.error('The response is no longer valid: either is too old or has been used previously');
+            break;
+          default:
+            console.error(`Unknown error code: ${code}`);
+        }
+      });
+      
+      return false;
     }
     
-    return response.data.success;
+    return true;
   } catch (error) {
     console.error('reCAPTCHA verification error:', error.message);
     if (error.response) {
-      console.error('Error response data:', error.response.data);
       console.error('Error response status:', error.response.status);
+      console.error('Error response data:', JSON.stringify(error.response.data));
+    } else if (error.request) {
+      console.error('No response received:', error.request);
     }
     return false;
   }
@@ -130,9 +160,18 @@ async function verifyRecaptcha(token) {
  * Middleware to verify reCAPTCHA token
  */
 const recaptchaMiddleware = async (req, res, next) => {
+  console.log('reCAPTCHA middleware called with NODE_ENV:', process.env.NODE_ENV);
+  
   // Skip verification in development or test mode
   if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') {
     console.log(`Skipping reCAPTCHA verification in ${process.env.NODE_ENV} mode`);
+    return next();
+  }
+
+  // Temporarily bypass verification for production debugging
+  // REMOVE THIS IN PRODUCTION AFTER DEBUGGING
+  if (process.env.BYPASS_RECAPTCHA === 'true') {
+    console.log('Bypassing reCAPTCHA verification (BYPASS_RECAPTCHA=true)');
     return next();
   }
 
@@ -142,35 +181,51 @@ const recaptchaMiddleware = async (req, res, next) => {
     return next();
   }
 
+  // Check if token exists
   const token = req.body.captchaToken;
   if (!token) {
     console.error('No reCAPTCHA token provided in request');
-    return res.status(400).json({ error: 'reCAPTCHA token is required' });
+    return res.status(400).json({ 
+      error: 'reCAPTCHA token is required',
+      details: 'The captchaToken field is missing in the request body'
+    });
   }
 
   try {
-    // Temporarily bypass verification for production debugging
-    // REMOVE THIS IN PRODUCTION AFTER DEBUGGING
-    if (process.env.BYPASS_RECAPTCHA === 'true') {
-      console.log('Bypassing reCAPTCHA verification (BYPASS_RECAPTCHA=true)');
-      return next();
-    }
-
+    // Verify the token
+    console.log(`Verifying token with length ${token.length}`);
     const isValid = await verifyRecaptcha(token);
+    
     if (!isValid) {
-      console.error('reCAPTCHA verification failed for token of length:', token.length);
-      return res.status(400).json({ error: 'reCAPTCHA verification failed' });
+      console.error('reCAPTCHA verification failed');
+      
+      // During debugging, we'll allow the request to proceed even if verification fails
+      if (process.env.ALLOW_ON_ERROR === 'true') {
+        console.log('Proceeding despite reCAPTCHA failure (ALLOW_ON_ERROR=true)');
+        return next();
+      }
+      
+      return res.status(400).json({ 
+        error: 'reCAPTCHA verification failed',
+        details: 'The provided token was rejected by the reCAPTCHA verification service'
+      });
     }
 
+    console.log('reCAPTCHA verification successful');
     next();
   } catch (error) {
     console.error('Error in reCAPTCHA middleware:', error);
+    
     // During debugging, we'll allow the request to proceed even if verification fails
     if (process.env.ALLOW_ON_ERROR === 'true') {
       console.log('Proceeding despite reCAPTCHA error (ALLOW_ON_ERROR=true)');
       return next();
     }
-    return res.status(500).json({ error: 'Internal server error during reCAPTCHA verification' });
+    
+    return res.status(500).json({ 
+      error: 'Internal server error during reCAPTCHA verification',
+      details: error.message
+    });
   }
 };
 
