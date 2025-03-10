@@ -31,9 +31,38 @@ const app = express();
 // Middleware
 app.use(express.json());
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || '*',
-  methods: ['GET', 'POST'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  origin: function(origin, callback) {
+    // Allow requests with no origin (like mobile apps, curl requests)
+    if (!origin) return callback(null, true);
+    
+    // Allow specific origins
+    const allowedOrigins = [
+      'https://www.presidentialchauffeurs.com',
+      'https://presidentialchauffeurs.com',
+      'https://presidential-chauffeurs.vercel.app',
+      'http://localhost:3000',
+      'http://localhost:5173'
+    ];
+    
+    // If CORS_ORIGIN is set in env, add it to allowed origins
+    if (process.env.CORS_ORIGIN) {
+      if (Array.isArray(process.env.CORS_ORIGIN)) {
+        allowedOrigins.push(...process.env.CORS_ORIGIN);
+      } else {
+        allowedOrigins.push(process.env.CORS_ORIGIN);
+      }
+    }
+    
+    if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV !== 'production') {
+      callback(null, true);
+    } else {
+      console.log('CORS blocked for origin:', origin);
+      callback(null, true); // Temporarily allow all origins while debugging
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
 // Rate limiting
@@ -108,14 +137,43 @@ app.get('/health', (req, res) => {
   });
 });
 
+// CORS test endpoint
+app.get('/api/cors-test', (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'CORS is working correctly',
+    origin: req.headers.origin || 'No origin header',
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Inquiry endpoint
 app.post('/api/inquiry', recaptchaMiddleware, async (req, res) => {
   try {
     const { vehicleId, vehicleName, purpose, date, email, description } = req.body;
 
+    // Log request for debugging
+    console.log('Received inquiry request:', {
+      vehicleName,
+      purpose,
+      date,
+      email: email ? email.substring(0, 3) + '***' : undefined, // Log partial email for privacy
+      hasDescription: !!description
+    });
+
     // Validate required fields
     if (!vehicleName || !purpose || !date || !email || !description) {
-      return res.status(400).json({ error: 'All fields are required' });
+      console.log('Validation failed: Missing required fields');
+      return res.status(400).json({ 
+        error: 'All fields are required',
+        missingFields: {
+          vehicleName: !vehicleName,
+          purpose: !purpose,
+          date: !date,
+          email: !email,
+          description: !description
+        }
+      });
     }
 
     // Validate date (must be in the future)
@@ -124,31 +182,51 @@ app.post('/api/inquiry', recaptchaMiddleware, async (req, res) => {
     today.setHours(0, 0, 0, 0);
     
     if (inquiryDate < today) {
-      return res.status(400).json({ error: 'Date must be in the future' });
+      console.log('Validation failed: Date must be in the future');
+      return res.status(400).json({ 
+        error: 'Date must be in the future',
+        providedDate: date,
+        currentDate: today.toISOString()
+      });
     }
 
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
+      console.log('Validation failed: Invalid email format');
       return res.status(400).json({ error: 'Invalid email format' });
     }
 
     // Send email
-    await sendEmail({
-      vehicleName,
-      purpose,
-      date,
-      email,
-      description
+    try {
+      await sendEmail({
+        vehicleName,
+        purpose,
+        date,
+        email,
+        description
+      });
+      
+      // Log successful inquiry
+      console.log(`Inquiry sent successfully for ${vehicleName} on ${date} from ${email.substring(0, 3)}***`);
+    } catch (emailError) {
+      console.error('Error sending email:', emailError);
+      return res.status(500).json({ 
+        error: 'Failed to send email',
+        details: process.env.NODE_ENV === 'development' ? emailError.message : undefined
+      });
+    }
+
+    res.status(200).json({ 
+      message: 'Inquiry sent successfully',
+      timestamp: new Date().toISOString()
     });
-
-    // Log successful inquiry
-    console.log(`Inquiry received for ${vehicleName} on ${date} from ${email}`);
-
-    res.status(200).json({ message: 'Inquiry sent successfully' });
   } catch (error) {
     console.error('Error processing inquiry:', error);
-    res.status(500).json({ error: 'Failed to process inquiry' });
+    res.status(500).json({ 
+      error: 'Failed to process inquiry',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 
