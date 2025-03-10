@@ -21,13 +21,21 @@ const generateEmailTemplate = (data) => {
   const { vehicleName, purpose, date, email, description } = data;
   const currentYear = new Date().getFullYear();
   
+  // Format the date for better readability
+  const formattedDate = new Date(date).toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+  
   // Use cached template structure if available and not expired
   if (templateCache.html && (Date.now() - templateCache.lastUpdated < TEMPLATE_CACHE_TTL)) {
     // Just replace the dynamic content in the cached template
     return templateCache.html
       .replace(/\{\{vehicleName\}\}/g, vehicleName)
       .replace(/\{\{purpose\}\}/g, purpose)
-      .replace(/\{\{date\}\}/g, date)
+      .replace(/\{\{date\}\}/g, formattedDate)
       .replace(/\{\{email\}\}/g, email)
       .replace(/\{\{description\}\}/g, description)
       .replace(/\{\{currentYear\}\}/g, currentYear);
@@ -143,7 +151,7 @@ const generateEmailTemplate = (data) => {
         
         <p>This inquiry was submitted through the Presidential Chauffeurs website.</p>
         
-        <a href="mailto:{{email}}?subject=Re: Inquiry for {{vehicleName}} - Presidential Chauffeurs&body=Dear Customer,%0A%0AThank you for your inquiry about our {{vehicleName}} service for {{purpose}} on {{date}}.%0A%0AWe appreciate your interest in Presidential Chauffeurs and would like to provide you with more information.%0A%0A" class="button">Reply to Customer</a>
+        <a href="mailto:{{email}}?subject=Re: Your Inquiry for {{vehicleName}} - Presidential Chauffeurs&body=Dear valued customer,%0D%0A%0D%0AThank you for your inquiry about our {{vehicleName}} service for {{purpose}} on {{date}}.%0D%0A%0D%0AWe appreciate your interest in Presidential Chauffeurs and would like to provide you with more information about your request.%0D%0A%0D%0APlease let us know if you have any specific questions or if you would like to proceed with booking this service.%0D%0A%0D%0ABest regards,%0D%0APresidential Chauffeurs Team%0D%0A" class="button">Reply to Customer</a>
       </div>
       <div class="footer">
         <p>&copy; {{currentYear}} Presidential Chauffeurs Inc. All rights reserved.</p>
@@ -161,7 +169,7 @@ const generateEmailTemplate = (data) => {
   return htmlTemplate
     .replace(/\{\{vehicleName\}\}/g, vehicleName)
     .replace(/\{\{purpose\}\}/g, purpose)
-    .replace(/\{\{date\}\}/g, date)
+    .replace(/\{\{date\}\}/g, formattedDate)
     .replace(/\{\{email\}\}/g, email)
     .replace(/\{\{description\}\}/g, description)
     .replace(/\{\{currentYear\}\}/g, currentYear);
