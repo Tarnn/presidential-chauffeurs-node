@@ -106,24 +106,6 @@ Returns the health status of the API.
 }
 ```
 
-### GET /api/vehicles
-
-Returns a list of all available vehicles.
-
-**Response:**
-
-```json
-[
-  {
-    "id": 1,
-    "name": "Rolls-Royce Phantom",
-    "description": "The epitome of luxury and refinement, perfect for executive travel.",
-    "rate": 1500
-  },
-  ...
-]
-```
-
 ### POST /api/inquiry
 
 Submits a new inquiry.

@@ -37,7 +37,7 @@ try {
   console.error('Failed to initialize email transporter:', error.message);
 }
 
-// Load vehicles data
+// Load vehicles data (used internally for inquiry processing)
 const vehicles = [
   {
     "id": 1,
@@ -70,14 +70,6 @@ app.get('/health', (req, res) => {
     timestamp: new Date().toISOString(),
     emailEnabled: !!transporter
   });
-});
-
-/**
- * Get all vehicles endpoint
- * Returns a list of all available vehicles
- */
-app.get('/api/vehicles', (req, res) => {
-  res.json(vehicles);
 });
 
 /**
